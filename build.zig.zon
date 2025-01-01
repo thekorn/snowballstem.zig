@@ -1,0 +1,15 @@
+.{
+    .name = "snowballstem.zig",
+    .version = "0.0.0",
+    .dependencies = .{
+        .snowball = .{
+            .url = "git+https://github.com/snowballstem/snowball.git#b72b71fd51e633cb7a63d9f1883266b3d4acac11",
+            .hash = "1220f73632b55528d8a6d8ab438c82d0addc9de0cf2399ca0bd89b87fadd24f15e45",
+        },
+    },
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+    },
+}
