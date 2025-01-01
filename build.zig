@@ -9,33 +9,16 @@ fn run_make(b: *std.Build, dep_snowball: *std.Build.Dependency, compile_step: *s
     b.getInstallStep().dependOn(&make_run.step);
 }
 
-pub fn build(b: *std.Build) void {
-    const target = b.standardTargetOptions(.{});
-    const optimize = b.standardOptimizeOption(.{});
+fn link(b: *std.Build, cmp_stemp: *std.Build.Step.Compile, dep_snowball: *std.Build.Dependency) void {
+    _ = b;
+    cmp_stemp.linkLibC();
 
-    const dep_snowball = b.dependency("snowball", .{
-        .target = target,
-        .optimize = optimize,
-    });
-    //_ = &make_step;
-
-    const exe = b.addExecutable(.{
-        .name = "snowballstem.zig",
-        .root_source_file = b.path("src/main.zig"),
-        .target = target,
-        .optimize = optimize,
-    });
-
-    var estep = exe.step;
-    run_make(b, dep_snowball, &estep);
-    exe.linkLibC();
-
-    exe.addCSourceFiles(.{
+    cmp_stemp.addCSourceFiles(.{
         .root = dep_snowball.path("libstemmer"),
         .files = &.{"libstemmer.c"},
     });
 
-    exe.addCSourceFiles(.{
+    cmp_stemp.addCSourceFiles(.{
         .root = dep_snowball.path("runtime"),
         .files = &.{
             "api.c",
@@ -43,7 +26,7 @@ pub fn build(b: *std.Build) void {
         },
     });
 
-    exe.addCSourceFiles(.{ .root = dep_snowball.path("src_c"), .files = &.{
+    cmp_stemp.addCSourceFiles(.{ .root = dep_snowball.path("src_c"), .files = &.{
         "stem_ISO_8859_1_basque.c",
         "stem_ISO_8859_1_catalan.c",
         "stem_ISO_8859_1_danish.c",
@@ -94,13 +77,35 @@ pub fn build(b: *std.Build) void {
         "stem_UTF_8_yiddish.c",
     } });
 
-    exe.installHeadersDirectory(dep_snowball.path(""), "include", .{
+    cmp_stemp.installHeadersDirectory(dep_snowball.path(""), "include", .{
         .include_extensions = &.{"libstemmer.h"},
     });
 
-    exe.addIncludePath(dep_snowball.path("include"));
-    exe.addIncludePath(dep_snowball.path("runtime"));
-    exe.addIncludePath(dep_snowball.path("src_c"));
+    cmp_stemp.addIncludePath(dep_snowball.path("include"));
+    cmp_stemp.addIncludePath(dep_snowball.path("runtime"));
+    cmp_stemp.addIncludePath(dep_snowball.path("src_c"));
+}
+
+pub fn build(b: *std.Build) void {
+    const target = b.standardTargetOptions(.{});
+    const optimize = b.standardOptimizeOption(.{});
+
+    const dep_snowball = b.dependency("snowball", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    //_ = &make_step;
+
+    const exe = b.addExecutable(.{
+        .name = "snowballstem.zig",
+        .root_source_file = b.path("src/main.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+
+    run_make(b, dep_snowball, &exe.step);
+
+    link(b, exe, dep_snowball);
 
     b.installArtifact(exe);
 
@@ -120,7 +125,10 @@ pub fn build(b: *std.Build) void {
         .root_source_file = b.path("src/main.zig"),
         .target = target,
         .optimize = optimize,
+        .test_runner = b.path("test_runner.zig"),
     });
+
+    link(b, exe_unit_tests, dep_snowball);
 
     const run_exe_unit_tests = b.addRunArtifact(exe_unit_tests);
 

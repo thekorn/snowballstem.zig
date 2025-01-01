@@ -9,7 +9,6 @@ pub fn list_stemmer(alloc: std.mem.Allocator) ![][*c]const u8 {
     const s = c.sb_stemmer_list();
     var p = s; // pointer to the first pointer
     while (p.* != null) {
-        std.debug.print("Found string: {s}\n", .{p.*});
         try result.append(p.*);
         p += 1; // move to the next pointer
     }
@@ -30,19 +29,11 @@ pub fn main() !void {
     }
 }
 
-test "simple test" {
-    var list = std.ArrayList(i32).init(std.testing.allocator);
-    defer list.deinit(); // Try commenting this out and see if zig detects the memory leak!
-    try list.append(42);
-    try std.testing.expectEqual(@as(i32, 42), list.pop());
-}
+test "test list stemmer" {
+    const alloc = std.testing.allocator;
 
-test "fuzz example" {
-    const global = struct {
-        fn testOne(input: []const u8) anyerror!void {
-            // Try passing `--fuzz` to `zig build test` and see if it manages to fail this test case!
-            try std.testing.expect(!std.mem.eql(u8, "canyoufindme", input));
-        }
-    };
-    try std.testing.fuzz(global.testOne, .{});
+    const stemmer = try list_stemmer(alloc);
+    defer alloc.free(stemmer);
+
+    try std.testing.expectEqual(30, stemmer.len);
 }
