@@ -1,5 +1,8 @@
 # zig wrapper for the snowball stemmer
 
+![ci workflow](https://github.com/thekorn/snowballstem.zig/actions/workflows/ci.yaml/badge.svg)
+
+
 **NOTE**: this is a work in progress, and not yet ready for use.
 
 ## Requirements
