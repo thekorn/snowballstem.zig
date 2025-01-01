@@ -45,6 +45,14 @@ pub fn main() !void {
 }
 ```
 
+## Tests
+
+Using `nix` tests can be run like
+
+```bash
+$ nix develop -c zig build test --summary all
+```
+
 ## TODOS
 
 - [ ] the build is not correct, first build sometimes fails
