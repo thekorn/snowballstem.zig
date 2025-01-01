@@ -3,6 +3,7 @@ const std = @import("std");
 fn run_make_and_linkall(b: *std.Build, dep_snowball: *std.Build.Dependency, exe: *std.Build.Step.Compile, exe_unit_tests: *std.Build.Step.Compile) void {
     var make_run = b.addSystemCommand(&.{"make"});
     make_run.setCwd(dep_snowball.path(""));
+    //make_run.addArg("-v");
     make_run.addArg("dist_libstemmer_c");
     b.getInstallStep().dependOn(&make_run.step);
 

@@ -4,13 +4,14 @@ const c = @cImport({
     @cInclude("libstemmer.h");
 });
 
-pub fn list_stemmer(alloc: std.mem.Allocator) ![][*c]const u8 {
-    var result = std.ArrayList([*c]const u8).init(alloc);
+pub fn list_stemmer(alloc: std.mem.Allocator) ![][]const u8 {
+    var result = std.ArrayList([]const u8).init(alloc);
     const s = c.sb_stemmer_list();
     var p = s; // pointer to the first pointer
     while (p.* != null) {
-        try result.append(p.*);
-        p += 1; // move to the next pointer
+        const v: []const u8 = std.mem.span(p.*);
+        try result.append(v);
+        p += 1;
     }
     return try result.toOwnedSlice();
 }
@@ -20,7 +21,6 @@ pub fn main() !void {
     defer std.debug.assert(gpa.deinit() == .ok);
     const alloc = gpa.allocator();
 
-    std.debug.print("All your {s} are belong to us.\n", .{"codebase"});
     const stemmer = try list_stemmer(alloc);
     defer alloc.free(stemmer);
 
@@ -36,4 +36,5 @@ test "test list stemmer" {
     defer alloc.free(stemmer);
 
     try std.testing.expectEqual(30, stemmer.len);
+    try std.testing.expectEqualStrings("arabic", stemmer[0]);
 }
