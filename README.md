@@ -51,7 +51,7 @@ pub fn main() !void {
 - [ ] implement the stemmer
 - [ ] make wasm buildable
 - [ ] how to handle german umlauts?
-- [ ] write test fro german stemmer to check against the [upstream test suite](https://github.com/snowballstem/snowball-data/blob/master/german/voc.txt)
+- [ ] write test for german stemmer to check against the [upstream test suite](https://github.com/snowballstem/snowball-data/blob/master/german/voc.txt)
 
 ## reference
 
