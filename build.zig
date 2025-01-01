@@ -1,15 +1,16 @@
 const std = @import("std");
 
-fn run_make(b: *std.Build, dep_snowball: *std.Build.Dependency, compile_step: *std.Build.Step) void {
-    const make_run = b.addSystemCommand(&.{"make"});
+fn run_make_and_linkall(b: *std.Build, dep_snowball: *std.Build.Dependency, exe: *std.Build.Step.Compile, exe_unit_tests: *std.Build.Step.Compile) void {
+    var make_run = b.addSystemCommand(&.{"make"});
     make_run.setCwd(dep_snowball.path(""));
     make_run.addArg("dist_libstemmer_c");
-
-    compile_step.dependOn(&make_run.step);
     b.getInstallStep().dependOn(&make_run.step);
+
+    link(b, exe, dep_snowball, make_run);
+    link(b, exe_unit_tests, dep_snowball, make_run);
 }
 
-fn link(b: *std.Build, cmp_stemp: *std.Build.Step.Compile, dep_snowball: *std.Build.Dependency) void {
+fn link(b: *std.Build, cmp_stemp: *std.Build.Step.Compile, dep_snowball: *std.Build.Dependency, make_run: *std.Build.Step.Run) void {
     _ = b;
     cmp_stemp.linkLibC();
 
@@ -84,6 +85,8 @@ fn link(b: *std.Build, cmp_stemp: *std.Build.Step.Compile, dep_snowball: *std.Bu
     cmp_stemp.addIncludePath(dep_snowball.path("include"));
     cmp_stemp.addIncludePath(dep_snowball.path("runtime"));
     cmp_stemp.addIncludePath(dep_snowball.path("src_c"));
+
+    cmp_stemp.step.dependOn(&make_run.step);
 }
 
 pub fn build(b: *std.Build) void {
@@ -94,7 +97,6 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
-    //_ = &make_step;
 
     const exe = b.addExecutable(.{
         .name = "snowballstem.zig",
@@ -103,15 +105,9 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    run_make(b, dep_snowball, &exe.step);
-
-    link(b, exe, dep_snowball);
-
     b.installArtifact(exe);
 
     const run_cmd = b.addRunArtifact(exe);
-
-    //run_cmd.step.dependOn(&make_step);
     run_cmd.step.dependOn(b.getInstallStep());
 
     if (b.args) |args| {
@@ -128,10 +124,10 @@ pub fn build(b: *std.Build) void {
         .test_runner = b.path("test_runner.zig"),
     });
 
-    link(b, exe_unit_tests, dep_snowball);
-
     const run_exe_unit_tests = b.addRunArtifact(exe_unit_tests);
 
     const test_step = b.step("test", "Run unit tests");
     test_step.dependOn(&run_exe_unit_tests.step);
+
+    run_make_and_linkall(b, dep_snowball, exe, exe_unit_tests);
 }
