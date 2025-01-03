@@ -10,6 +10,19 @@ const usage =
     \\
 ;
 
+const LineIter = struct {
+    reader: std.fs.File.Reader,
+    alloc: std.mem.Allocator,
+
+    pub fn next(self: *LineIter) ?[]const u8 {
+        const line = self.reader.readUntilDelimiterOrEofAlloc(self.alloc, '\n', std.math.maxInt(usize)) catch |err| {
+            std.log.err("Failed to read line: {s}", .{@errorName(err)});
+            return null;
+        };
+        return line;
+    }
+};
+
 pub fn main() !void {
     var arena_state = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer arena_state.deinit();
@@ -74,21 +87,8 @@ pub fn main() !void {
     var output_entries = std.ArrayList([]const u8).init(arena);
     defer output_entries.deinit();
 
-    while (voc_file.reader().readUntilDelimiterOrEofAlloc(arena, '\n', std.math.maxInt(usize)) catch |err| {
-        std.log.err("Failed to read line: {s}", .{@errorName(err)});
-        return;
-    }) |line| {
-        try voc_entries.append(line);
-    }
-
-    while (voc_output_file.reader().readUntilDelimiterOrEofAlloc(arena, '\n', std.math.maxInt(usize)) catch |err| {
-        std.log.err("Failed to read line: {s}", .{@errorName(err)});
-        return;
-    }) |line| {
-        try output_entries.append(line);
-    }
-
-    std.debug.assert(voc_entries.items.len == output_entries.items.len);
+    var voc_file_iter = LineIter{ .reader = voc_file.reader(), .alloc = arena };
+    var output_file_iter = LineIter{ .reader = voc_output_file.reader(), .alloc = arena };
 
     try output_file.writeAll(
         \\const std = @import("std");
@@ -96,10 +96,9 @@ pub fn main() !void {
         \\
     );
 
-    var p: usize = 0;
-    while (voc_entries.items.len > p) : (p += 1) {
-        const voc_item = voc_entries.items[p];
-        const output_item = output_entries.items[p];
+    while (true) {
+        const voc_item = voc_file_iter.next() orelse break;
+        const output_item = output_file_iter.next() orelse break;
 
         const test_case = try std.fmt.allocPrint(arena,
             \\
