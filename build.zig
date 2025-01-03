@@ -233,15 +233,19 @@ pub fn build(b: *std.Build) void {
 
     const tool_step = b.addRunArtifact(tool);
 
+    const lang = "german";
+    const output_file = b.fmt("{s}_tests.zig", .{lang});
+
     tool_step.addArg("--voc-file");
-    tool_step.addFileArg(dep_snowball_data.path("german/voc.txt"));
+    tool_step.addFileArg(dep_snowball_data.path(b.fmt("{s}/voc.txt", .{lang})));
     tool_step.addArg("--voc-output-file");
-    tool_step.addFileArg(dep_snowball_data.path("german/output.txt"));
+    tool_step.addFileArg(dep_snowball_data.path(b.fmt("{s}/output.txt", .{lang})));
     tool_step.addArg("--output-file");
-    const output = tool_step.addOutputFileArg("german_tests.zig");
+    const output = tool_step.addOutputFileArg(output_file);
+    tool_step.addArgs(&.{ "--lang", lang });
 
     const wf = b.addUpdateSourceFiles();
-    wf.addCopyFileToSource(output, "src/tests/german_tests.zig");
+    wf.addCopyFileToSource(output, b.fmt("src/tests/{s}", .{output_file}));
 
     const voc_tests = b.addTest(.{
         .root_source_file = b.path("src/tests.zig"),

@@ -33,6 +33,7 @@ pub fn main() !void {
     var opt_input_file_path: ?[]const u8 = null;
     var opt_voc_output_file_path: ?[]const u8 = null;
     var opt_output_file_path: ?[]const u8 = null;
+    var opt_lang: ?[]const u8 = null;
 
     {
         var i: usize = 1;
@@ -56,6 +57,11 @@ pub fn main() !void {
                 if (i > args.len) fatal("expected arg after '{s}'", .{arg});
                 if (opt_output_file_path != null) fatal("duplicated {s} argument", .{arg});
                 opt_output_file_path = args[i];
+            } else if (std.mem.eql(u8, "--lang", arg)) {
+                i += 1;
+                if (i > args.len) fatal("expected arg after '{s}'", .{arg});
+                if (opt_lang != null) fatal("duplicated {s} argument", .{arg});
+                opt_lang = args[i];
             } else {
                 fatal("unrecognized arg: '{s}'", .{arg});
             }
@@ -65,6 +71,7 @@ pub fn main() !void {
     const voc_file_path = opt_input_file_path orelse fatal("missing --voc-file", .{});
     const voc_output_file_path = opt_voc_output_file_path orelse fatal("missing --voc-output-file", .{});
     const output_file_path = opt_output_file_path orelse fatal("missing --voc-output-file", .{});
+    const lang = opt_lang orelse "german";
 
     var output_file = std.fs.cwd().createFile(output_file_path, .{}) catch |err| {
         fatal("unable to open '{s}': {s}", .{ output_file_path, @errorName(err) });
@@ -102,14 +109,14 @@ pub fn main() !void {
 
         const test_case = try std.fmt.allocPrint(arena,
             \\
-            \\test "test german '{s}'" {{
-            \\    var s = try Stemmer.init("german", "UTF_8");
+            \\test "test {s} '{s}'" {{
+            \\    var s = try Stemmer.init("{s}", "UTF_8");
             \\    defer s.deinit();
             \\
             \\    try std.testing.expectEqualStrings("{s}", s.stem("{s}"));
             \\}}
             \\
-        , .{ voc_item, output_item, voc_item });
+        , .{ lang, voc_item, lang, output_item, voc_item });
 
         try output_file.writeAll(test_case);
     }

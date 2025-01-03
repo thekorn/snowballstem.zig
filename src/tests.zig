@@ -2,4 +2,5 @@
 
 test {
     _ = @import("tests/german_tests.zig");
+    //   _ = @import("tests/english_tests.zig");
 }
