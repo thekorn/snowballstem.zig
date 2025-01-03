@@ -233,13 +233,13 @@ pub fn build(b: *std.Build) void {
     tool_step.addArg("--voc-output-file");
     tool_step.addFileArg(b.path("test_data/german/output.txt"));
     tool_step.addArg("--output-file");
-    const output = tool_step.addOutputFileArg("voc_tests.zig");
+    const output = tool_step.addOutputFileArg("german_tests.zig");
 
     const wf = b.addUpdateSourceFiles();
-    wf.addCopyFileToSource(output, "src/voc_tests.zig");
+    wf.addCopyFileToSource(output, "src/tests/german_tests.zig");
 
     const voc_tests = b.addTest(.{
-        .root_source_file = b.path("src/voc_tests.zig"),
+        .root_source_file = b.path("src/tests.zig"),
         .target = target,
         .optimize = optimize,
         // use the default test runner to be less verbose

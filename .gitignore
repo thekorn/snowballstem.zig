@@ -1,4 +1,4 @@
 zig-out
 .zig-cache
 
-src/*_tests.zig
+src/tests/

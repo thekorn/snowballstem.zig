@@ -92,7 +92,7 @@ pub fn main() !void {
 
     try output_file.writeAll(
         \\const std = @import("std");
-        \\const Stemmer = @import("Stemmer.zig");
+        \\const Stemmer = @import("../Stemmer.zig");
         \\
     );
 
