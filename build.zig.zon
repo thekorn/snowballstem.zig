@@ -6,6 +6,10 @@
             .url = "git+https://github.com/snowballstem/snowball.git#b72b71fd51e633cb7a63d9f1883266b3d4acac11",
             .hash = "1220f73632b55528d8a6d8ab438c82d0addc9de0cf2399ca0bd89b87fadd24f15e45",
         },
+        .@"snowball-data" = .{
+            .url = "git+https://github.com/snowballstem/snowball-data.git?ref=master#90c332471d2fc7edc8f3d40644fe33d8d9a2f712",
+            .hash = "1220a228c844f0f90d028ff266f5db56c1cbcc3371407ab2975eb031a7eee1400fde",
+        },
     },
     .paths = .{
         "build.zig",

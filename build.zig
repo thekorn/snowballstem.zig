@@ -182,6 +182,11 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
+    const dep_snowball_data = b.dependency("snowball-data", .{
+        .target = target,
+        .optimize = optimize,
+    });
+
     const exe = b.addExecutable(.{
         .name = "snowballstem.zig",
         .root_source_file = b.path("src/main.zig"),
@@ -229,9 +234,9 @@ pub fn build(b: *std.Build) void {
     const tool_step = b.addRunArtifact(tool);
 
     tool_step.addArg("--voc-file");
-    tool_step.addFileArg(b.path("test_data/german/voc.txt"));
+    tool_step.addFileArg(dep_snowball_data.path("german/voc.txt"));
     tool_step.addArg("--voc-output-file");
-    tool_step.addFileArg(b.path("test_data/german/output.txt"));
+    tool_step.addFileArg(dep_snowball_data.path("german/output.txt"));
     tool_step.addArg("--output-file");
     const output = tool_step.addOutputFileArg("german_tests.zig");
 
