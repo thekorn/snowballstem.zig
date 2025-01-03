@@ -62,7 +62,7 @@ $ nix develop -c zig build test --summary all
 - [x] implement the stemmer
 - [ ] make wasm buildable
 - [ ] how to handle german umlauts?
-- [ ] write test for german stemmer to check against the [upstream test suite](https://github.com/snowballstem/snowball-data/blob/master/german/voc.txt)
+- [x] write test for german stemmer to check against the [upstream test suite](https://github.com/snowballstem/snowball-data/blob/master/german/voc.txt)
 
 ## reference
 
