@@ -238,15 +238,13 @@ pub fn build(b: *std.Build) void {
     const wf = b.addUpdateSourceFiles();
     wf.addCopyFileToSource(output, "src/voc_tests.zig");
 
-    // wf.step.dependOn(;
-    test_step.dependOn(&wf.step);
-
     const voc_tests = b.addTest(.{
         .root_source_file = b.path("src/voc_tests.zig"),
         .target = target,
         .optimize = optimize,
         .test_runner = b.path("test_runner.zig"),
     });
+    voc_tests.step.dependOn(&wf.step);
 
     const run_voc_tests = b.addRunArtifact(voc_tests);
     test_step.dependOn(&run_voc_tests.step);
