@@ -1,6 +1,6 @@
 const std = @import("std");
 
-fn run_make_and_linkall(b: *std.Build, dep_snowball: *std.Build.Dependency, exe: *std.Build.Step.Compile, exe_unit_tests: *std.Build.Step.Compile, module_snowballstem: *std.Build.Module) void {
+fn run_make_and_linkall(b: *std.Build, dep_snowball: *std.Build.Dependency, exe: *std.Build.Step.Compile, exe_unit_tests: *std.Build.Step.Compile, voc_tests: *std.Build.Step.Compile, module_snowballstem: *std.Build.Module) void {
     var make_run = b.addSystemCommand(&.{"make"});
     make_run.setCwd(dep_snowball.path(""));
     //make_run.addArg("-v");
@@ -9,6 +9,7 @@ fn run_make_and_linkall(b: *std.Build, dep_snowball: *std.Build.Dependency, exe:
 
     link(b, exe, dep_snowball, make_run);
     link(b, exe_unit_tests, dep_snowball, make_run);
+    link(b, voc_tests, dep_snowball, make_run);
     link_modul(b, module_snowballstem, dep_snowball, make_run);
 }
 
@@ -219,5 +220,36 @@ pub fn build(b: *std.Build) void {
         .link_libc = true,
     });
 
-    run_make_and_linkall(b, dep_snowball, exe, exe_unit_tests, module_snowballstem);
+    const tool = b.addExecutable(.{
+        .name = "generate_voc_tests",
+        .root_source_file = b.path("tools/generate_voc_tests.zig"),
+        .target = target,
+    });
+
+    const tool_step = b.addRunArtifact(tool);
+
+    tool_step.addArg("--voc-file");
+    tool_step.addFileArg(b.path("test_data/german/voc.txt"));
+    tool_step.addArg("--voc-output-file");
+    tool_step.addFileArg(b.path("test_data/german/output.txt"));
+    tool_step.addArg("--output-file");
+    const output = tool_step.addOutputFileArg("voc_tests.zig");
+
+    const wf = b.addUpdateSourceFiles();
+    wf.addCopyFileToSource(output, "src/voc_tests.zig");
+
+    // wf.step.dependOn(;
+    test_step.dependOn(&wf.step);
+
+    const voc_tests = b.addTest(.{
+        .root_source_file = b.path("src/voc_tests.zig"),
+        .target = target,
+        .optimize = optimize,
+        .test_runner = b.path("test_runner.zig"),
+    });
+
+    const run_voc_tests = b.addRunArtifact(voc_tests);
+    test_step.dependOn(&run_voc_tests.step);
+
+    run_make_and_linkall(b, dep_snowball, exe, exe_unit_tests, voc_tests, module_snowballstem);
 }
