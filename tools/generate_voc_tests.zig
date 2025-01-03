@@ -4,9 +4,9 @@ const usage =
     \\Usage: ./generate_voc_tests [options]
     \\
     \\Options:
-    \\  --voc-file voc file
-    \\  --voc-output-file voc output file
-    \\  --output-file output file
+    \\  --voc-file voc file - test corpus
+    \\  --voc-output-file voc output file - expected test results
+    \\  --output-file generated zig code output file
     \\
 ;
 
@@ -78,7 +78,6 @@ pub fn main() !void {
         std.log.err("Failed to read line: {s}", .{@errorName(err)});
         return;
     }) |line| {
-        //defer arena.free(line);
         try voc_entries.append(line);
     }
 
@@ -86,7 +85,6 @@ pub fn main() !void {
         std.log.err("Failed to read line: {s}", .{@errorName(err)});
         return;
     }) |line| {
-        //defer arena.free(line);
         try output_entries.append(line);
     }
 
@@ -102,32 +100,6 @@ pub fn main() !void {
     while (voc_entries.items.len > p) : (p += 1) {
         const voc_item = voc_entries.items[p];
         const output_item = output_entries.items[p];
-
-        // const test_case = try std.fmt.allocPrint(arena,
-        //     \\
-        //     \\test "test german '{s}'" {
-        //     \\    var s = try Stemmer.init("german", "UTF_8");
-        //     \\    defer s.deinit();
-        //     \\
-        //     \\    try std.testing.expectEqualStrings("{s}", s.stem("{s}"));
-        //     \\}
-        //     \\
-        // , .{ voc_item, output_item, voc_item });
-
-        // try output_file.writeAll(
-        //     try std.fmt.allocPrint(arena, "\ntest \"test german '{s}'\" \\{\n", .{ voc_item })
-        // );
-        //
-        // const test_case = try std.fmt.allocPrint(arena,
-        //     \\    var s = try Stemmer.init("german", "UTF_8");
-        //     \\    defer s.deinit();
-        //     \\
-        //     \\    try std.testing.expectEqualStrings("{s}", s.stem("{s}"));
-        //     \\}
-        //     \\
-        // , .{ voc_item, output_item, voc_item });
-
-        // try output_file.writeAll(test_case);
 
         const test_case = try std.fmt.allocPrint(arena,
             \\
