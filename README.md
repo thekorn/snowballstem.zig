@@ -21,12 +21,12 @@ Add dependency and import to the `build.zig` file:
 
 ```zig
 ...
-const minijinja = b.dependency("snowballstem", .{
+const snowballstem = b.dependency("snowballstem", .{
     .target = target,
     .optimize = optimize,
 });
 ...
-exe.root_module.addImport("snowballstem", minijinja.module("snowballstem"));
+exe.root_module.addImport("snowballstem", snowballstem.module("snowballstem"));
 ```
 
 And then, just use it in the code:
