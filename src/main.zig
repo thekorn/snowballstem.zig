@@ -59,3 +59,18 @@ test "test german stemmer" {
 
     //try std.testing.expectEqualStrings("abenddämmerung", s.stem("abenddammer"));
 }
+
+test "test german stemmer multiple words" {
+    var s = try Stemmer.init("german", "UTF_8");
+    defer s.deinit();
+
+    const txt = "abgeordnetenversammlung ist ein langes wort";
+
+    var lineIter = std.mem.tokenizeSequence(u8, txt, " ");
+
+    try std.testing.expectEqualStrings("abgeordnetenversamml", s.stem(lineIter.next().?));
+    try std.testing.expectEqualStrings("ist", s.stem(lineIter.next().?));
+    try std.testing.expectEqualStrings("ein", s.stem(lineIter.next().?));
+    try std.testing.expectEqualStrings("lang", s.stem(lineIter.next().?));
+    try std.testing.expectEqualStrings("wort", s.stem(lineIter.next().?));
+}
