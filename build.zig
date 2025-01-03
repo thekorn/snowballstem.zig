@@ -242,7 +242,8 @@ pub fn build(b: *std.Build) void {
         .root_source_file = b.path("src/voc_tests.zig"),
         .target = target,
         .optimize = optimize,
-        .test_runner = b.path("test_runner.zig"),
+        // use the default test runner to be less verbose
+        // .test_runner = b.path("test_runner.zig"),
     });
     voc_tests.step.dependOn(&wf.step);
 
