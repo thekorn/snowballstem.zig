@@ -260,4 +260,15 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(&run_voc_tests.step);
 
     run_make_and_linkall(b, dep_snowball, exe, exe_unit_tests, voc_tests, module_snowballstem);
+
+    const stemmer_lang_selector_tool = b.addExecutable(.{
+        .name = "select_languages",
+        .root_source_file = b.path("tools/select_languages.zig"),
+        .target = target,
+    });
+
+    //FIXME: remove
+    b.installArtifact(stemmer_lang_selector_tool);
+
+    _ = b.addRunArtifact(stemmer_lang_selector_tool);
 }

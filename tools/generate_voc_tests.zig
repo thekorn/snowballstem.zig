@@ -70,7 +70,7 @@ pub fn main() !void {
 
     const voc_file_path = opt_input_file_path orelse fatal("missing --voc-file", .{});
     const voc_output_file_path = opt_voc_output_file_path orelse fatal("missing --voc-output-file", .{});
-    const output_file_path = opt_output_file_path orelse fatal("missing --voc-output-file", .{});
+    const output_file_path = opt_output_file_path orelse fatal("missing --output-file", .{});
     const lang = opt_lang orelse "german";
 
     var output_file = std.fs.cwd().createFile(output_file_path, .{}) catch |err| {
