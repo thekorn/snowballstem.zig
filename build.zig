@@ -1,5 +1,77 @@
 const std = @import("std");
 
+var stemmer = [_][]const u8{
+    "stem_ISO_8859_1_basque.c",
+    "stem_ISO_8859_1_catalan.c",
+    "stem_ISO_8859_1_danish.c",
+    "stem_ISO_8859_1_dutch.c",
+    "stem_ISO_8859_1_english.c",
+    "stem_ISO_8859_1_finnish.c",
+    "stem_ISO_8859_1_french.c",
+    "stem_ISO_8859_1_german.c",
+    "stem_ISO_8859_1_indonesian.c",
+    "stem_ISO_8859_1_irish.c",
+    "stem_ISO_8859_1_italian.c",
+    "stem_ISO_8859_1_norwegian.c",
+    "stem_ISO_8859_1_porter.c",
+    "stem_ISO_8859_1_portuguese.c",
+    "stem_ISO_8859_1_spanish.c",
+    "stem_ISO_8859_1_swedish.c",
+    "stem_ISO_8859_2_hungarian.c",
+    "stem_KOI8_R_russian.c",
+    "stem_UTF_8_arabic.c",
+    "stem_UTF_8_armenian.c",
+    "stem_UTF_8_basque.c",
+    "stem_UTF_8_catalan.c",
+    "stem_UTF_8_danish.c",
+    "stem_UTF_8_dutch.c",
+    "stem_UTF_8_estonian.c",
+    "stem_UTF_8_english.c",
+    "stem_UTF_8_finnish.c",
+    "stem_UTF_8_french.c",
+    "stem_UTF_8_german.c",
+    "stem_UTF_8_greek.c",
+    "stem_UTF_8_hindi.c",
+    "stem_UTF_8_hungarian.c",
+    "stem_UTF_8_indonesian.c",
+    "stem_UTF_8_irish.c",
+    "stem_UTF_8_italian.c",
+    "stem_UTF_8_lithuanian.c",
+    "stem_UTF_8_nepali.c",
+    "stem_UTF_8_norwegian.c",
+    "stem_UTF_8_porter.c",
+    "stem_UTF_8_portuguese.c",
+    "stem_UTF_8_romanian.c",
+    "stem_UTF_8_russian.c",
+    "stem_UTF_8_serbian.c",
+    "stem_UTF_8_spanish.c",
+    "stem_UTF_8_swedish.c",
+    "stem_UTF_8_tamil.c",
+    "stem_UTF_8_turkish.c",
+    "stem_UTF_8_yiddish.c",
+};
+
+fn filter_stemmer(alloc: std.mem.Allocator, selected_languages: ?[]const u8, filter_result: *[][]u8) void {
+    if (selected_languages == null) {
+        var value = std.ArrayList(u8).init(alloc);
+        try value.appendSlice(stemmer);
+        filter_result.* = try value.toOwnedSlice();
+        return;
+    }
+
+    var result = std.ArrayList([]const u8).init(alloc);
+    defer result.deinit();
+
+    for (stemmer) |stem| {
+        var x = std.mem.splitBackwardsScalar(u8, stem, '.');
+        _ = x.next();
+        const y = x.next() orelse unreachable;
+        var z = std.mem.splitBackwardsScalar(u8, y, '_');
+        const lang = z.next() orelse unreachable;
+        std.debug.print(">>>>>>>> {s}\n", .{lang});
+    }
+}
+
 fn run_make_and_linkall(
     b: *std.Build,
     dep_snowball: *std.Build.Dependency,
@@ -292,6 +364,9 @@ pub fn build(b: *std.Build) void {
     if (stemmer_langs != null) {
         stemmer_lang_selector_tool_step.addArgs(&.{ "--langs", stemmer_langs.? });
     }
+
+    var filtered_stemmer: [][]u8 = undefined;
+    filter_stemmer(b.allocator, stemmer_langs, &filtered_stemmer);
 
     run_make_and_linkall(
         b,
