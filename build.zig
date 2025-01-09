@@ -51,14 +51,7 @@ var stemmer = [_][]const u8{
     "stem_UTF_8_yiddish.c",
 };
 
-fn filter_stemmer(alloc: std.mem.Allocator, selected_languages: ?[]const u8, filter_result: *[][]u8) void {
-    if (selected_languages == null) {
-        var value = std.ArrayList(u8).init(alloc);
-        try value.appendSlice(stemmer);
-        filter_result.* = try value.toOwnedSlice();
-        return;
-    }
-
+fn filter_stemmer(alloc: std.mem.Allocator, selected_languages: ?[]const u8) ![]const []const u8 {
     var result = std.ArrayList([]const u8).init(alloc);
     defer result.deinit();
 
@@ -68,8 +61,19 @@ fn filter_stemmer(alloc: std.mem.Allocator, selected_languages: ?[]const u8, fil
         const y = x.next() orelse unreachable;
         var z = std.mem.splitBackwardsScalar(u8, y, '_');
         const lang = z.next() orelse unreachable;
-        std.debug.print(">>>>>>>> {s}\n", .{lang});
+        if (selected_languages == null) {
+            try result.append(stem);
+        } else {
+            var s = std.mem.tokenizeAny(u8, lang, ",");
+            while (s.next()) |l| {
+                if (std.mem.eql(u8, l, lang)) {
+                    try result.append(stem);
+                }
+            }
+        }
     }
+
+    return try result.toOwnedSlice();
 }
 
 fn run_make_and_linkall(
@@ -80,6 +84,7 @@ fn run_make_and_linkall(
     voc_tests: *std.Build.Step.Compile,
     module_snowballstem: *std.Build.Module,
     stemmer_lang_selector_tool_step: *std.Build.Step.Run,
+    lang_includes: []const []const u8,
 ) void {
     var make_run = b.addSystemCommand(&.{"make"});
     make_run.setCwd(dep_snowball.path(""));
@@ -89,13 +94,19 @@ fn run_make_and_linkall(
 
     make_run.step.dependOn(&stemmer_lang_selector_tool_step.step);
 
-    link(b, exe, dep_snowball, make_run);
-    link(b, exe_unit_tests, dep_snowball, make_run);
-    link(b, voc_tests, dep_snowball, make_run);
-    link_modul(b, module_snowballstem, dep_snowball, make_run);
+    link(b, exe, dep_snowball, make_run, lang_includes);
+    link(b, exe_unit_tests, dep_snowball, make_run, lang_includes);
+    link(b, voc_tests, dep_snowball, make_run, lang_includes);
+    link_modul(b, module_snowballstem, dep_snowball, make_run, lang_includes);
 }
 
-fn link(b: *std.Build, cmp_stemp: *std.Build.Step.Compile, dep_snowball: *std.Build.Dependency, make_run: *std.Build.Step.Run) void {
+fn link(
+    b: *std.Build,
+    cmp_stemp: *std.Build.Step.Compile,
+    dep_snowball: *std.Build.Dependency,
+    make_run: *std.Build.Step.Run,
+    lang_includes: []const []const u8,
+) void {
     _ = b;
     cmp_stemp.linkLibC();
 
@@ -114,56 +125,7 @@ fn link(b: *std.Build, cmp_stemp: *std.Build.Step.Compile, dep_snowball: *std.Bu
 
     cmp_stemp.addCSourceFiles(.{
         .root = dep_snowball.path("src_c"),
-        .files = &.{
-            //"stem_ISO_8859_1_basque.c",
-            //"stem_ISO_8859_1_catalan.c",
-            //"stem_ISO_8859_1_danish.c",
-            //"stem_ISO_8859_1_dutch.c",
-            //"stem_ISO_8859_1_english.c",
-            //"stem_ISO_8859_1_finnish.c",
-            //"stem_ISO_8859_1_french.c",
-            "stem_ISO_8859_1_german.c",
-            //"stem_ISO_8859_1_indonesian.c",
-            //"stem_ISO_8859_1_irish.c",
-            //"stem_ISO_8859_1_italian.c",
-            //"stem_ISO_8859_1_norwegian.c",
-            //"stem_ISO_8859_1_porter.c",
-            //"stem_ISO_8859_1_portuguese.c",
-            //"stem_ISO_8859_1_spanish.c",
-            //"stem_ISO_8859_1_swedish.c",
-            //"stem_ISO_8859_2_hungarian.c",
-            //"stem_KOI8_R_russian.c",
-            //"stem_UTF_8_arabic.c",
-            //"stem_UTF_8_armenian.c",
-            //"stem_UTF_8_basque.c",
-            //"stem_UTF_8_catalan.c",
-            //"stem_UTF_8_danish.c",
-            //"stem_UTF_8_dutch.c",
-            //"stem_UTF_8_estonian.c",
-            //"stem_UTF_8_english.c",
-            //"stem_UTF_8_finnish.c",
-            //"stem_UTF_8_french.c",
-            "stem_UTF_8_german.c",
-            //"stem_UTF_8_greek.c",
-            //"stem_UTF_8_hindi.c",
-            //"stem_UTF_8_hungarian.c",
-            //"stem_UTF_8_indonesian.c",
-            //"stem_UTF_8_irish.c",
-            //"stem_UTF_8_italian.c",
-            //"stem_UTF_8_lithuanian.c",
-            //"stem_UTF_8_nepali.c",
-            //"stem_UTF_8_norwegian.c",
-            //"stem_UTF_8_porter.c",
-            //"stem_UTF_8_portuguese.c",
-            //"stem_UTF_8_romanian.c",
-            //"stem_UTF_8_russian.c",
-            //"stem_UTF_8_serbian.c",
-            //"stem_UTF_8_spanish.c",
-            //"stem_UTF_8_swedish.c",
-            //"stem_UTF_8_tamil.c",
-            //"stem_UTF_8_turkish.c",
-            //"stem_UTF_8_yiddish.c",
-        },
+        .files = lang_includes,
     });
 
     cmp_stemp.installHeadersDirectory(dep_snowball.path(""), "include", .{
@@ -177,7 +139,13 @@ fn link(b: *std.Build, cmp_stemp: *std.Build.Step.Compile, dep_snowball: *std.Bu
     cmp_stemp.step.dependOn(&make_run.step);
 }
 
-fn link_modul(b: *std.Build, cmp_stemp: *std.Build.Module, dep_snowball: *std.Build.Dependency, make_run: *std.Build.Step.Run) void {
+fn link_modul(
+    b: *std.Build,
+    cmp_stemp: *std.Build.Module,
+    dep_snowball: *std.Build.Dependency,
+    make_run: *std.Build.Step.Run,
+    lang_includes: []const []const u8,
+) void {
     _ = b;
     _ = make_run;
     //cmp_stemp.linkLibC();
@@ -197,56 +165,7 @@ fn link_modul(b: *std.Build, cmp_stemp: *std.Build.Module, dep_snowball: *std.Bu
 
     cmp_stemp.addCSourceFiles(.{
         .root = dep_snowball.path("src_c"),
-        .files = &.{
-            //"stem_ISO_8859_1_basque.c",
-            //"stem_ISO_8859_1_catalan.c",
-            //"stem_ISO_8859_1_danish.c",
-            //"stem_ISO_8859_1_dutch.c",
-            //"stem_ISO_8859_1_english.c",
-            //"stem_ISO_8859_1_finnish.c",
-            //"stem_ISO_8859_1_french.c",
-            "stem_ISO_8859_1_german.c",
-            //"stem_ISO_8859_1_indonesian.c",
-            //"stem_ISO_8859_1_irish.c",
-            //"stem_ISO_8859_1_italian.c",
-            //"stem_ISO_8859_1_norwegian.c",
-            //"stem_ISO_8859_1_porter.c",
-            //"stem_ISO_8859_1_portuguese.c",
-            //"stem_ISO_8859_1_spanish.c",
-            //"stem_ISO_8859_1_swedish.c",
-            //"stem_ISO_8859_2_hungarian.c",
-            //"stem_KOI8_R_russian.c",
-            //"stem_UTF_8_arabic.c",
-            //"stem_UTF_8_armenian.c",
-            //"stem_UTF_8_basque.c",
-            //"stem_UTF_8_catalan.c",
-            //"stem_UTF_8_danish.c",
-            //"stem_UTF_8_dutch.c",
-            //"stem_UTF_8_estonian.c",
-            //"stem_UTF_8_english.c",
-            //"stem_UTF_8_finnish.c",
-            //"stem_UTF_8_french.c",
-            "stem_UTF_8_german.c",
-            //"stem_UTF_8_greek.c",
-            //"stem_UTF_8_hindi.c",
-            //"stem_UTF_8_hungarian.c",
-            //"stem_UTF_8_indonesian.c",
-            //"stem_UTF_8_irish.c",
-            //"stem_UTF_8_italian.c",
-            //"stem_UTF_8_lithuanian.c",
-            //"stem_UTF_8_nepali.c",
-            //"stem_UTF_8_norwegian.c",
-            //"stem_UTF_8_porter.c",
-            //"stem_UTF_8_portuguese.c",
-            //"stem_UTF_8_romanian.c",
-            //"stem_UTF_8_russian.c",
-            //"stem_UTF_8_serbian.c",
-            //"stem_UTF_8_spanish.c",
-            //"stem_UTF_8_swedish.c",
-            //"stem_UTF_8_tamil.c",
-            //"stem_UTF_8_turkish.c",
-            //"stem_UTF_8_yiddish.c",
-        },
+        .files = lang_includes,
     });
 
     //cmp_stemp.installHeadersDirectory(dep_snowball.path(""), "include", .{
@@ -365,8 +284,7 @@ pub fn build(b: *std.Build) void {
         stemmer_lang_selector_tool_step.addArgs(&.{ "--langs", stemmer_langs.? });
     }
 
-    var filtered_stemmer: [][]u8 = undefined;
-    filter_stemmer(b.allocator, stemmer_langs, &filtered_stemmer);
+    const lang_includes = filter_stemmer(b.allocator, stemmer_langs) catch unreachable;
 
     run_make_and_linkall(
         b,
@@ -376,5 +294,6 @@ pub fn build(b: *std.Build) void {
         voc_tests,
         module_snowballstem,
         stemmer_lang_selector_tool_step,
+        lang_includes,
     );
 }
