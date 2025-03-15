@@ -1,7 +1,7 @@
 {
   inputs = {
     flake-utils.url = "github:numtide/flake-utils";
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 
     zig-overlay.url = "github:mitchellh/zig-overlay";
     zls-master = {
@@ -21,8 +21,10 @@
       in {
         devShell = pkgs.mkShell {
           nativeBuildInputs = with pkgs; [
-            zig-overlay.packages.${system}."master-2024-12-01"
-            zls-master.packages.${system}.default
+            #zig-overlay.packages.${system}."master-2024-12-01"
+            #zls-master.packages.${system}.default
+            zig
+            zls
 
             lldb
             hyperfine
