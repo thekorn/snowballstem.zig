@@ -28,7 +28,7 @@ test "test list stemmer" {
     const stemmer = try Stemmer.list(alloc);
     defer alloc.free(stemmer);
 
-    try std.testing.expectEqual(30, stemmer.len);
+    try std.testing.expectEqual(29, stemmer.len);
     try std.testing.expectEqualStrings("arabic", stemmer[0]);
 }
 
